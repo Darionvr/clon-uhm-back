@@ -4,7 +4,6 @@ import "dotenv/config";
 import petRouter from './routes/pets.routes.js'
 import userRouter from './routes/users.routes.js';
 import requestRouter from './routes/request.routes.js';
-import serverless from 'serverless-http';
 
 const app = express(); //Export para que funcione Jest
 
@@ -29,6 +28,7 @@ app.use((err, req, res, next) => {
 });
 
 
+const PORT = process.env.PORT || 5000;
 
 
-export default serverless(app);
+export default app;
