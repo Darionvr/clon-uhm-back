@@ -4,8 +4,9 @@ import "dotenv/config";
 import petRouter from './routes/pets.routes.js'
 import userRouter from './routes/users.routes.js';
 import requestRouter from './routes/request.routes.js';
+import serverless from 'serverless-http';
 
-export const app = express(); //Export para que funcione Jest
+const app = express(); //Export para que funcione Jest
 
 app.use(cors({}));
 app.use(express.json())
@@ -33,3 +34,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Escuchando puerto ${PORT}`);
 });
+
+export default serverless(app);
