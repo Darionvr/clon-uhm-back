@@ -2,7 +2,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { authOptionalMiddleware } from "../middlewares/authOptional.middleware.js";
 import { petController } from "../controllers/pet.controller.js";
 import { Router } from "express";
-import { upload } from "../middlewares/upload.middleware.js";
+import fileUpload from 'express-fileupload';
 
 
 const router = Router()
@@ -17,7 +17,7 @@ router.get("/myPets", authMiddleware, petController.readByUser)
 router.get("/:id", authOptionalMiddleware, petController.readById)
 
 //Crear una mascota
-router.post("/", authMiddleware,  upload.single('photo'), petController.create)
+router.post("/", authMiddleware,  fileUpload({useTempFiles : true, tempFileDir : './uploads/'}), petController.create)
 
 //actualizar mascotas   
 router.patch('/:id', authMiddleware, petController.update);

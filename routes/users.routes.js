@@ -1,7 +1,7 @@
 import { userController } from "../controllers/user.controller.js";
 import {authMiddleware} from "../middlewares/auth.middleware.js";
 import { Router } from "express";
-import { upload } from "../middlewares/upload.middleware.js";
+import fileUpload from 'express-fileupload';
 
 
 const userRouter = Router();
@@ -9,7 +9,7 @@ const userRouter = Router();
 userRouter.get("/me", authMiddleware, userController.getProfile)
 
 //registra el usuario
-userRouter.post("/register",  upload.single('photo'), userController.register);
+userRouter.post("/register",  fileUpload({useTempFiles : true, tempFileDir : './uploads/'}), userController.register);
 
 //login usuario
 

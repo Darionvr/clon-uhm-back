@@ -1,7 +1,8 @@
 import { userModel } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { upload } from "../middlewares/upload.middleware.js";
+import uploadImage from '../utils/cloudinary.js';
+import fs from 'fs-extra'
 
 
 const SECRET_KEY = process.env.JWT_SECRET || 'unhogarmaspassword';
@@ -28,7 +29,12 @@ const register = async (req, res) => {
 
 
     const { first_name, last_name, email, password, rut } = req.body;
-    const photo = req.file ? req.file.filename : null;
+
+
+
+    const photo = req.files?.image
+        ? await uploadImage(req.files.image.tempFilePath)
+        : null;
 
     if (!first_name || !last_name || !email || !rut || !password) {
         return res.status(400).json({ message: 'Todos los campos son requeridos' });
@@ -49,14 +55,20 @@ const register = async (req, res) => {
             email,
             rut,
             password: hashedPassword,
-            photo: photo ? `../uploads/${photo}` : null
+            photo: photo?.secure_url
         });
+
+        if (req.files?.image) {
+            await fs.unlink(req.files.image.tempFilePath);
+        }
 
         const token = jwt.sign(
             { id: newUser.id, email: newUser.email, role: newUser.role },
             SECRET_KEY,
             { expiresIn: '1h' }
         );
+
+
 
         return res.status(201).json({ message: 'Usuario creado exitosamente', user: newUser, token });
     } catch (error) {

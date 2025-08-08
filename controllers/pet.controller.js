@@ -1,6 +1,7 @@
 import { petModel } from "../models/pet.model.js";
-import { upload } from "../middlewares/upload.middleware.js";
-import fs from 'fs/promises'
+import uploadImage from "../utils/cloudinary.js";
+import fs from 'fs-extra'
+
 
 const BASE_URL =
   process.env.NODE_ENV === 'production'
@@ -76,29 +77,36 @@ const readByUser = async (req, res) => {
 //crear la mascota
 const create = async (req, res) => {
   const { name, specie, weight, age, gender, chip, description } = req.body;
-  const photo = req.file ? req.file.filename : null;
+  const photo = req.files?.image
+    ? await uploadImage(req.files.image.tempFilePath)
+    : null;
   const userId = req.user.id
 
   if (!name || !specie || !weight || !age || !gender || !chip || !photo || !description) {
     return res.status(400).json({ message: "Faltan campos requeridos" });
   }
-
-  const petData = {
-    name,
-    specie,
-    weight: Number(weight),
-    age: Number(age),
-    gender,
-    chip,
-    photo: photo ? `../uploads/${photo}` : null,
-    description,
-  };
-
   try {
     const newPet = await petModel.create(petData, userId);
+
+    const petData = {
+      name,
+      specie,
+      weight: Number(weight),
+      age: Number(age),
+      gender,
+      chip,
+      photo: photo?.secure_url,
+      description,
+    };
+
+
+    if (req.files?.image) {
+      await fs.unlink(req.files.image.tempFilePath);
+    }
+
     return res.status(201).json(newPet);;
   } catch (error) {
-    return res.status(500).json({ message: "Errorx en el servidor" });
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 
 };
@@ -153,7 +161,7 @@ const remove = async (req, res) => {
     }
 
     try {
-      
+
       const filePath = `../uploads/${pet.photo}`;
       await fs.unlink(filePath);
       console.log(`Foto eliminada: ${pet.photo}`);
