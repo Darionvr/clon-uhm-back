@@ -1,16 +1,14 @@
 import { userModel } from '../models/user.model.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import uploadImage from '../utils/cloudinary.js';
+import { cloudinaryMiddle } from '../utils/cloudinary.js';
 import fs from 'fs-extra'
 
 
 const SECRET_KEY = process.env.JWT_SECRET || 'unhogarmaspassword';
 const JWT_EXPIRES_IN = '1h';
 
-
 const getProfile = async (req, res) => {
-
     try {
         const user = await userModel.findById(req.user.id)
         if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
@@ -21,33 +19,22 @@ const getProfile = async (req, res) => {
     }
 }
 
-
-
-//Registro del usuario
 const register = async (req, res) => {
 
-
-
     const { first_name, last_name, email, password, rut } = req.body;
-
-
     let photo = req.files?.photo
-        ? await uploadImage(req.files.photo.tempFilePath)
+        ? await cloudinaryMiddle.uploadImage(req.files.photo.tempFilePath)
         : null;
 
     if (!first_name || !last_name || !email || !rut || !password) {
         return res.status(400).json({ message: 'Todos los campos son requeridos' });
     }
-
-
     try {
         const userExist = await userModel.findByEmail(email);
         if (userExist) {
             return res.status(409).json({ message: 'El correo electrónico ya está en uso' });
         }
-
         const hashedPassword = await bcrypt.hash(password, 10);
-
         const newUser = await userModel.create({
             first_name,
             last_name,
@@ -66,9 +53,6 @@ const register = async (req, res) => {
             SECRET_KEY,
             { expiresIn: '1h' }
         );
-
-
-
         return res.status(201).json({ message: 'Usuario creado exitosamente', user: newUser, token });
     } catch (error) {
         console.error('Error en el register:', error);
@@ -78,10 +62,9 @@ const register = async (req, res) => {
         });
     }
 };
-//login del usuario
+
 const login = async (req, res) => {
     const { email, password } = req.body;
-
     if (!email || !password) {
         return res.status(400).json({ message: 'Correo electrónico y contraseña requeridos' });
     }
@@ -90,7 +73,6 @@ const login = async (req, res) => {
         const user = await userModel.findByEmail(email);
         if (!user) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
-
         }
 
         const validPassword = await bcrypt.compare(password, user.password);
@@ -107,21 +89,16 @@ const login = async (req, res) => {
     }
 };
 
-
-
-//actualizar informacion del usuario 
 const update = async (req, res) => {
     const userId = req.user.id;
     const { first_name, last_name, email } = req.body;
 
-
     if (!first_name && !last_name && !email) {
-        return res.status(400).json({ message: 'No se proporcionaron campos para actualizar' });
+        return res.status(400).json({ message: 'No se proporcionaron datos para actualizar' });
     }
 
     try {
         const updatedUser = await userModel.update(userId, { first_name, last_name, email });
-
         return res.status(200).json({
             message: 'Perfil actualizado con éxito',
             user: updatedUser
@@ -131,7 +108,6 @@ const update = async (req, res) => {
         return res.status(500).json({ message: 'Error en el servidor' });
     }
 }
-
 
 export const userController = {
     update,

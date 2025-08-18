@@ -1,16 +1,13 @@
 import { petModel } from "../models/pet.model.js";
-import uploadImage from "../utils/cloudinary.js";
+import { cloudinaryMiddle } from '../utils/cloudinary.js';
 import fs from 'fs-extra'
-
 
 const BASE_URL =
   process.env.NODE_ENV === 'production'
     ? process.env.DOMAIN_URL_APP
     : `http://localhost:${process.env.PORT}`;
 
-
-const read = async (req, res) => {  
-
+const read = async (req, res) => {
   try {
     const { page = 1, specie, size, age } = req.query;
     const isPageValid = /^[1-9]\d*$/.test(page);
@@ -18,11 +15,9 @@ const read = async (req, res) => {
     if (specie) filters.specie = specie;
     if (size) filters.size = size;
     if (age) filters.age = age;
-
     if (!isPageValid) {
       return res.status(400).json({ message: "Invalid page number, page > 0" });
     }
-
 
     const pets = await petModel.findAllPets(filters);
     return res.status(200).json(pets);
@@ -33,13 +28,12 @@ const read = async (req, res) => {
 };
 
 const readById = async (req, res) => {
-
   const petId = req.params.id;
   const userId = req.user?.id || null;
 
+  console.log("req.user:", req.user);
   try {
     const pet = await petModel.findById(petId);
-
     if (!pet) {
       return res.status(404).json({ message: 'Mascota no encontrada' });
     }
@@ -58,7 +52,6 @@ const readById = async (req, res) => {
   }
 };
 
-
 const readByUser = async (req, res) => {
   const userId = req.user.id;
 
@@ -74,16 +67,13 @@ const readByUser = async (req, res) => {
   }
 };
 
-
-//crear la mascota
 const create = async (req, res) => {
 
   try {
     const { name, specie, weight, age, gender, chip, description } = req.body;
-
     const author_post = req.user.id;
     let photo = req.files?.photo
-      ? await uploadImage(req.files.photo.tempFilePath)
+      ? await cloudinaryMiddle.uploadImage(req.files.photo.tempFilePath)
       : null;
 
     if (!name || !specie || !weight || !age || !gender || photo === null || !description) {
@@ -98,16 +88,14 @@ const create = async (req, res) => {
       gender,
       chip,
       photo: photo?.secure_url,
+      photo_id: photo?.public_id,
       description
     };
 
     const newPet = await petModel.create(petData, author_post);
 
-    try {
+    if (req.files?.image) {
       await fs.unlink(req.files.photo.tempFilePath);
-      console.log("Archivo temporal eliminado");
-    } catch (err) {
-      console.error("Error al eliminar archivo temporal:", err);
     }
 
     return res.status(201).json(newPet);;
@@ -127,18 +115,15 @@ const update = async (req, res) => {
   const updatedFields = req.body;
 
   try {
-    //Verificar si existe la mascota
     const pet = await petModel.findById(petId);
     if (!pet) {
       return res.status(404).json({ message: 'Mascota no encontrada' });
     }
 
-    //Verificar propiedad
     if (pet.author_post !== userId) {
       return res.status(403).json({ message: 'No tienes permiso para editar esta publicación' });
     }
 
-    //Actualizar la mascota
     const updatedPet = await petModel.update(petId, userId, updatedFields);
 
     return res.status(200).json({
@@ -154,34 +139,25 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
   const petId = req.params.id;
-  const userRole = req.user.role;
-
-  console.log('Petición DELETE recibida para ID:', petId);
+  const userRole = req.user?.role;
+  const userId = req.user?.id
 
   try {
-    // Verificar si la mascota existe
     const pet = await petModel.findById(petId);
     if (!pet) {
       return res.status(404).json({ message: 'Mascota no encontrada' });
     }
+    const isOwner = pet.author_post === userId;
 
-    // Verificar si el usuario es el dueño
-    if (userRole !== "administrador") {
+    if (userRole !== 'administrador' && !isOwner) {
       return res.status(403).json({ message: 'No tienes permiso para eliminar esta publicación' });
     }
 
-    try {
-
-      const filePath = `../uploads/${pet.photo}`;
-      await fs.unlink(filePath);
-      console.log(`Foto eliminada: ${pet.photo}`);
-    } catch (error) {
-      console.error('Error al eliminar la foto:', error.message);
+    if (pet.photo_id) {
+      await cloudinaryMiddle.deleteImage(pet.photo_id);
     }
 
-    // Eliminar la mascota
     const deletedPet = await petModel.remove(petId);
-
     return res.status(200).json({
       message: 'Mascota eliminada con éxito',
       pet: deletedPet

@@ -7,8 +7,12 @@ export const authOptionalMiddleware = (req, res, next) => {
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
-      const payload = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = payload; 
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = {
+            id: decoded.id,
+            email: decoded.email,
+            role: decoded.role 
+        };; 
     } catch (err) {
       console.warn('Token inválido, se continúa sin usuario');
     }

@@ -22,10 +22,9 @@ const findAllPets = async ({ limit = 8, page = 1, specie, size, age }) => {
   if (age === '1-3a') conditions.push(`age BETWEEN 1 AND 3`);
   if (age === '+4a') conditions.push(`age > 4`);
 
-  // Construir cláusula WHERE
+  // Agregar WHERE
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  // Calcular offset para paginación
   const offset = (page - 1) * limit;
 
   // Query de conteo
@@ -34,7 +33,7 @@ const findAllPets = async ({ limit = 8, page = 1, specie, size, age }) => {
   const total_rows = parseInt(countRows[0].count, 10);
   const total_pages = Math.ceil(total_rows / limit);
 
-  // Query de datos
+  // Query
   const dataSQL = `
     SELECT *
     FROM pets
@@ -58,9 +57,6 @@ const findAllPets = async ({ limit = 8, page = 1, specie, size, age }) => {
   };
 };
 
-
-
-
 const findById = async (id) => {
   const query = "Select * from pets where id = $1";
   const { rows } = await pool.query(query, [id]);
@@ -73,10 +69,9 @@ const findByUser = async (userId) => {
   return rows;
 };
 
-
 const create = async (pet, userId) => {
-  const query = "Insert into pets (name, specie, weight, age, gender, chip, photo, description, author_post) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *"
-  const { rows } = await pool.query(query, [pet.name, pet.specie, pet.weight, pet.age, pet.gender, pet.chip, pet.photo, pet.description, userId])
+  const query = "Insert into pets (name, specie, weight, age, gender, chip, photo, photo_id, description, author_post) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) returning *"
+  const { rows } = await pool.query(query, [pet.name, pet.specie, pet.weight, pet.age, pet.gender, pet.chip, pet.photo, pet.photo_id, pet.description, userId])
   return rows[0]
 }
 
