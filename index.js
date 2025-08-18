@@ -3,7 +3,6 @@ import cors from 'cors'
 import "dotenv/config";
 import petRouter from './routes/pets.routes.js'
 import userRouter from './routes/users.routes.js';
-import requestRouter from './routes/request.routes.js';
 
 
 app.use(cors({
