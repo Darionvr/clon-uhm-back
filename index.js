@@ -5,6 +5,8 @@ import petRouter from './routes/pets.routes.js'
 import userRouter from './routes/users.routes.js';
 
 
+const app = express();
+
 app.use(cors({
   origin: ['https://uhm-front.netlify.app'], 
   credentials: true
