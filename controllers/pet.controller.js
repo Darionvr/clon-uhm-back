@@ -9,7 +9,13 @@ const BASE_URL =
     : `http://localhost:${process.env.PORT}`;
 
 
-const read = async (req, res) => {
+const read = async (req, res) => {  
+
+
+ res.setHeader('Access-Control-Allow-Origin', 'https://uhm-front.netlify.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   try {
     const { page = 1, specie, size, age } = req.query;
     const isPageValid = /^[1-9]\d*$/.test(page);
