@@ -13,8 +13,6 @@ app.use(cors({
 
 
 app.use(express.json())
-app.use('/pets', petRouter);
-app.use('/users', userRouter)
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', 'https://uhm-front.netlify.app');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -26,6 +24,8 @@ app.use((req, res, next) => {
 
   next();
 });
+app.use('/pets', petRouter);
+app.use('/users', userRouter)
 const PORT = process.env.PORT || 5000;
 
 
