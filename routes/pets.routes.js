@@ -17,7 +17,7 @@ router.get("/myPets", authMiddleware, petController.readByUser)
 router.get("/:id", authOptionalMiddleware, petController.readById)
 
 //Crear una mascota
-router.post("/", authMiddleware,  fileUpload({useTempFiles : true, tempFileDir : './uploads/'}), petController.create)
+router.post("/", authMiddleware, fileUpload({useTempFiles : true, tempFileDir : './uploads/'}), petController.create)
 
 //actualizar mascotas   
 router.patch('/:id', authMiddleware, petController.update);

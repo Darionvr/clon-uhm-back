@@ -7,48 +7,49 @@ const BASE_URL =
     : `http://localhost:${process.env.PORT}`;
 
 const findAllPets = async ({ limit = 8, page = 1, specie, size, age }) => {
-  let countQuery = 'SELECT COUNT(*) FROM pets WHERE true';
-  const countConditions = [];
+  const values = [];
+  const conditions = [];
 
-  if (specie) countConditions.push(format('specie = %L', specie));
-  if (size === '800gr-4kg') countConditions.push('weight BETWEEN 0.8 AND 4');
-  if (size === '5kg-9kg') countConditions.push('weight BETWEEN 5 AND 9');
-  if (size === '+10kg') countConditions.push('weight >= 10');
-  if (age === '-1a') countConditions.push('age < 1');
-  if (age === '1-3a') countConditions.push('age BETWEEN 1 AND 3');
-  if (age === '+4a') countConditions.push('age > 4');
-
-  if (countConditions.length > 0) {
-    countQuery += ' AND ' + countConditions.join(' AND ');
+  // Filtros dinámicos
+  if (specie) {
+    values.push(specie);
+    conditions.push(`specie = $${values.length}`);
   }
+  if (size === '800gr-4kg') conditions.push(`weight BETWEEN 0.8 AND 4`);
+  if (size === '5kg-9kg') conditions.push(`weight BETWEEN 5 AND 9`);
+  if (size === '+10kg') conditions.push(`weight >= 10`);
+  if (age === '-1a') conditions.push(`age < 1`);
+  if (age === '1-3a') conditions.push(`age BETWEEN 1 AND 3`);
+  if (age === '+4a') conditions.push(`age > 4`);
 
- 
-  const { rows: countResult } = await pool.query(countQuery);
-  const total_rows = parseInt(countResult[0].count, 10);
-  const total_pages = Math.ceil(total_rows / limit);
+  // Construir cláusula WHERE
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  // Calcular offset para paginación
   const offset = (page - 1) * limit;
 
+  // Query de conteo
+  const countSQL = `SELECT COUNT(*) FROM pets ${whereClause}`;
+  const { rows: countRows } = await pool.query(countSQL, values);
+  const total_rows = parseInt(countRows[0].count, 10);
+  const total_pages = Math.ceil(total_rows / limit);
 
-  let query = 'SELECT * FROM pets WHERE true';
-  const conditions = [...countConditions];
-
-  if (conditions.length > 0) {
-    query += ' AND ' + conditions.join(' AND ');
-  }
-
-  query += format(' ORDER BY created_at DESC LIMIT %L OFFSET %L', limit, offset);
-
-  const { rows } = await pool.query(query);
-
-
-  const results = rows.map((row) => ({
-    ...row,
-    href: `${BASE_URL}/api/pets/${row.id}`,
-  }));
-
+  // Query de datos
+  const dataSQL = `
+    SELECT *
+    FROM pets
+    ${whereClause}
+    ORDER BY created_at DESC
+    LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+  `;
+  const dataValues = [...values, limit, offset];
+  const { rows } = await pool.query(dataSQL, dataValues);
 
   return {
-    results,
+    results: rows.map(row => ({
+      ...row,
+      href: `${BASE_URL}/api/pets/${row.id}`,
+    })),
     total_pages,
     page,
     limit,
@@ -56,6 +57,7 @@ const findAllPets = async ({ limit = 8, page = 1, specie, size, age }) => {
     previous: page > 1 ? `${BASE_URL}/api/pets?limit=${limit}&page=${page - 1}` : null,
   };
 };
+
 
 
 

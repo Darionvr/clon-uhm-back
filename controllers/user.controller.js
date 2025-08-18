@@ -31,9 +31,8 @@ const register = async (req, res) => {
     const { first_name, last_name, email, password, rut } = req.body;
 
 
-
-    const photo = req.files?.image
-        ? await uploadImage(req.files.image.tempFilePath)
+    let photo = req.files?.photo
+        ? await uploadImage(req.files.photo.tempFilePath)
         : null;
 
     if (!first_name || !last_name || !email || !rut || !password) {
@@ -59,7 +58,7 @@ const register = async (req, res) => {
         });
 
         if (req.files?.image) {
-            await fs.unlink(req.files.image.tempFilePath);
+            await fs.unlink(req.files.photo.tempFilePath);
         }
 
         const token = jwt.sign(

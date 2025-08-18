@@ -16,5 +16,7 @@ app.use('/request', requestRouter)
 
 const PORT = process.env.PORT || 5000;
 
-
+app.listen(PORT, () => {
+  console.log(`Escuchando puerto ${PORT}`);
+});
 export default app;

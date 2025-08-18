@@ -11,10 +11,10 @@ const BASE_URL =
 
 const read = async (req, res) => {
   try {
-    const { page = 1, species, size, age } = req.query;
+    const { page = 1, specie, size, age } = req.query;
     const isPageValid = /^[1-9]\d*$/.test(page);
     const filters = { page: Number(page), };
-    if (species) filters.species = species;
+    if (specie) filters.specie = specie;
     if (size) filters.size = size;
     if (age) filters.age = age;
 
@@ -76,37 +76,46 @@ const readByUser = async (req, res) => {
 
 //crear la mascota
 const create = async (req, res) => {
-  const { name, specie, weight, age, gender, chip, description } = req.body;
-  const photo = req.files?.image
-    ? await uploadImage(req.files.image.tempFilePath)
-    : null;
-  const userId = req.user.id
 
-  if (!name || !specie || !weight || !age || !gender || !chip || !photo || !description) {
-    return res.status(400).json({ message: "Faltan campos requeridos" });
-  }
   try {
-    const newPet = await petModel.create(petData, userId);
+    const { name, specie, weight, age, gender, chip, description } = req.body;
+
+    const author_post = req.user.id;
+    let photo = req.files?.photo
+      ? await uploadImage(req.files.photo.tempFilePath)
+      : null;
+
+    if (!name || !specie || !weight || !age || !gender || photo === null || !description) {
+      return res.status(400).json({ message: "Faltan campos requeridos" });
+    }
 
     const petData = {
       name,
       specie,
-      weight: Number(weight),
-      age: Number(age),
+      weight,
+      age,
       gender,
       chip,
       photo: photo?.secure_url,
-      description,
+      description
     };
 
+    const newPet = await petModel.create(petData, author_post);
 
-    if (req.files?.image) {
-      await fs.unlink(req.files.image.tempFilePath);
+    try {
+      await fs.unlink(req.files.photo.tempFilePath);
+      console.log("Archivo temporal eliminado");
+    } catch (err) {
+      console.error("Error al eliminar archivo temporal:", err);
     }
 
     return res.status(201).json(newPet);;
   } catch (error) {
-    return res.status(500).json({ message: "Error en el servidor" });
+    console.error("Error en create:", error);
+    return res.status(500).json({
+      message: "Error en el servidor",
+      error: error.message
+    })
   }
 
 };
