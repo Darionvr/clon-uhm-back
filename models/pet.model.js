@@ -15,12 +15,12 @@ const findAllPets = async ({ limit = 8, page = 1, specie, size, age }) => {
     values.push(specie);
     conditions.push(`specie = $${values.length}`);
   }
-  if (size === '800gr-4kg') conditions.push(`weight BETWEEN 0.8 AND 4`);
-  if (size === '5kg-9kg') conditions.push(`weight BETWEEN 5 AND 9`);
-  if (size === '+10kg') conditions.push(`weight >= 10`);
-  if (age === '-1a') conditions.push(`age < 1`);
-  if (age === '1-3a') conditions.push(`age BETWEEN 1 AND 3`);
-  if (age === '+4a') conditions.push(`age > 4`);
+  if (size === '800gr-4kg') conditions.push(`weight::NUMERIC BETWEEN 0.8 AND 4`);
+  if (size === '5kg-9kg') conditions.push(`weight::NUMERIC BETWEEN 5 AND 9`);
+  if (size === '+10kg') conditions.push(`weight::NUMERIC >= 10`);
+  if (age === '-1a') conditions.push(`age::INT < 1`);
+  if (age === '1-3a') conditions.push(`age::INT BETWEEN 1 AND 3`);
+  if (age === '+4a') conditions.push(`age::INT > 4`);
 
   // Agregar WHERE
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
