@@ -7,7 +7,7 @@ import userRouter from './routes/users.routes.js';
 const app = express();
 
 app.use(cors({
-  origin: 'https://uhm-front.netlify.app', // https://uhm-front.netlify.app o '*' si estoy en desarrollo
+  origin: ['https://uhm-front.netlify.app'], // ['https://uhm-front.netlify.app'] o '*' si estoy en desarrollo
   credentials: true
 }));
 app.use(express.json())
